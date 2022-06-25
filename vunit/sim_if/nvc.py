@@ -69,7 +69,6 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         output_path,
         prefix,
         gui=False,
-        gtkwave_fmt=None,
         gtkwave_args="",
     ):
         SimulatorInterface.__init__(self, output_path, gui)
@@ -82,7 +81,6 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             )
 
         self._gui = gui
-        self._gtkwave_fmt = "fst" if gui and gtkwave_fmt is None else gtkwave_fmt
         self._gtkwave_args = gtkwave_args
         self._vhdl_standard = None
         self._coverage_test_dirs = set()
@@ -257,8 +255,8 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         if not Path(script_path).exists():
             makedirs(script_path)
 
-        if self._gtkwave_fmt is not None:
-            data_file_name = str(Path(script_path) / ("wave.%s" % self._gtkwave_fmt))
+        if self._gui:
+            data_file_name = str(Path(script_path) / ("%s.fst" % config.entity_name))
             if Path(data_file_name).exists():
                 remove(data_file_name)
         else:
