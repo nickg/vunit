@@ -219,7 +219,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             "--std=%s" % self._std_str(self._vhdl_standard),
         ]
 
-        cmd += ["-H", config.sim_options.get("nvc.elab_flags", "64m")]
+        cmd += ["-H", config.sim_options.get("nvc.heap_size", "64m")]
 
         for library in self._project.get_libraries():
             cmd += ["--map=%s:%s" % (library.name, library.directory)]
