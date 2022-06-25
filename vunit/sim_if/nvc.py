@@ -41,6 +41,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
     sim_options = [
         ListOfStringOption("nvc.sim_flags"),
         ListOfStringOption("nvc.elab_flags"),
+        StringOption("nvc.heap_size"),
         StringOption("nvc.gtkwave_script.gui"),
     ]
 
@@ -218,8 +219,9 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             str(Path(self._prefix) / self.executable),
             f"--work={config.library_name}:{self._project.get_library(config.library_name).directory!s}",
             "--std=%s" % self._std_str(self._vhdl_standard),
-            "-H 256m"
         ]
+
+        cmd += ["-H", config.sim_options.get("nvc.elab_flags", "64m")]
 
         for library in self._project.get_libraries():
             cmd += ["--map=%s:%s" % (library.name, library.directory)]
