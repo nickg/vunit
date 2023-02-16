@@ -233,6 +233,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             cmd += ['-g%s=%s' % (name, value)]
 
         if not elaborate_only:
+            cmd += ["--no-save"]
             cmd += ["-r"]
             cmd += config.sim_options.get("nvc.sim_flags", [])
             cmd += ["--exit-severity=%s" % config.vhdl_assert_stop_level]
@@ -284,6 +285,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             cmd += ['-g%s=%s' % (name, value)]
 
         if not elaborate_only:
+            cmd += ["--no-save"]
             cmd += ["-r"]
             cmd += config.sim_options.get("nvc.sim_flags", [])
             cmd += ["--exit-severity=%s" % config.vhdl_assert_stop_level]
