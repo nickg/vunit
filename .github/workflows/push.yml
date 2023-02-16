@@ -22,12 +22,12 @@ jobs:
     steps:
 
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: '🐍 Setup Python'
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
     - name: '🐍 Install dependencies'
       run: |
@@ -35,7 +35,7 @@ jobs:
         pip install -U virtualenv tox --progress-bar off
 
     - name: '🐍 Run black'
-      run: tox -e py310-fmt -- --check
+      run: tox -e py311-fmt -- --check
 
 #
 # Linux linting and unit tests
@@ -47,17 +47,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { py: '3.10' , task: 310-lint }
+          - { py: '3.11' , task: 311-lint }
           - { py: '3.7'  , task: 37-unit }
-          - { py: '3.10' , task: 310-unit }
+          - { py: '3.11' , task: 311-unit }
     name: '🐧 Ubuntu · ${{ matrix.task }}'
     steps:
 
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: '🐍 Setup Python'
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.py }}
 
@@ -79,14 +79,14 @@ jobs:
       fail-fast: false
       matrix:
         task: [
-          {do: 310-acceptance,  tag: llvm},
-          {do: 310-vcomponents, tag: mcode},
+          {do: 311-acceptance,  tag: llvm},
+          {do: 311-vcomponents, tag: mcode},
         ]
     name: '🛳️ Container · ${{ matrix.task.do }} · ${{ matrix.task.tag }}'
     steps:
 
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -122,7 +122,7 @@ jobs:
         install: mingw-w64-x86_64-python-pip
 
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -149,14 +149,14 @@ jobs:
     steps:
 
     - name: '🧰 Checkout'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
     - name: '🐍 Setup Python'
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
     - name: '🐍 Install dependencies'
       run: |
