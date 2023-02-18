@@ -243,7 +243,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
                                 config.library_name,
                                 libdir)
 
-        cmd += ["-H", config.sim_options.get("nvc.heap_size", "128m")]
+        cmd += ["-H", config.sim_options.get("nvc.heap_size", "64m")]
 
         cmd += ["-e"]
 
