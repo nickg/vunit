@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Copyright (c) 2014-2022, Lars Asplund lars.anders.asplund@gmail.com
+# Copyright (c) 2014-2023, Lars Asplund lars.anders.asplund@gmail.com
 
 """
 Interface for NVC simulator
@@ -178,30 +178,42 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         """
         Convert standard to format of NVC command line flag
         """
+        if vhdl_standard == VHDL.STD_1993:
+            return "1993"
+
         if vhdl_standard == VHDL.STD_2002:
             return "2002"
 
         if vhdl_standard == VHDL.STD_2008:
             return "2008"
 
-        if vhdl_standard == VHDL.STD_1993:
-            return "1993"
+        if vhdl_standard == VHDL.STD_2019:
+            return "2019"
 
         raise ValueError("Invalid VHDL standard %s" % vhdl_standard)
 
-    def compile_vhdl_file_command(self, source_file):
+    def _get_command(self, std, worklib, workpath):
         """
-        Returns the command to compile a vhdl file
+        Get basic NVC command with global options
         """
         cmd = [
             str(Path(self._prefix) / self.executable),
-            "--work=%s:%s" % (source_file.library.name,
-                              source_file.library.directory),
-            "--std=%s" % self._std_str(source_file.get_vhdl_standard()),
+            f"--work={worklib}:{workpath!s}",
+            f"--std={self._std_str(std)}",
         ]
 
         for library in self._project.get_libraries():
             cmd += ["--map=%s:%s" % (library.name, library.directory)]
+
+        return cmd
+
+    def compile_vhdl_file_command(self, source_file):
+        """
+        Returns the command to compile a VHDL file
+        """
+        cmd = self._get_command(source_file.get_vhdl_standard(),
+                                source_file.library.name,
+                                source_file.library.directory)
 
         cmd += ["-a"]
         cmd += source_file.compile_options.get("nvc.a_flags", [])
@@ -209,77 +221,34 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         cmd += [source_file.name]
         return cmd
 
-    def _get_command(self, config, output_path, elaborate_only, wave_file):
-        """
-        Return NVC simulation command
-        """
-        cmd = [
-            str(Path(self._prefix) / self.executable),
-            f"--work={config.library_name}:{self._project.get_library(config.library_name).directory!s}",
-            "--std=%s" % self._std_str(self._vhdl_standard),
-        ]
-
-        cmd += ["-H", config.sim_options.get("nvc.heap_size", "64m")]
-
-        for library in self._project.get_libraries():
-            cmd += ["--map=%s:%s" % (library.name, library.directory)]
-
-        cmd += ["-e"]
-
-        cmd += config.sim_options.get("nvc.elab_flags", [])
-        cmd += ['%s-%s' % (config.entity_name, config.architecture_name)]
-
-        for name, value in config.generics.items():
-            cmd += ['-g%s=%s' % (name, value)]
-
-        if not elaborate_only:
-            cmd += ["--no-save"]
-            cmd += ["-r"]
-            cmd += config.sim_options.get("nvc.sim_flags", [])
-            cmd += ["--exit-severity=%s" % config.vhdl_assert_stop_level]
-
-            if config.sim_options.get("disable_ieee_warnings", False):
-                cmd += ["--ieee-warnings=off"]
-
-            if wave_file:
-                cmd += ["--wave=%s" % wave_file]
-
-        return cmd
-
     def simulate(self, output_path, test_suite_name, config, elaborate_only):
         """
         Simulate with entity as top level using generics
         """
 
-        script_path = str(Path(output_path) / self.name)
+        script_path = Path(output_path) / self.name
 
-        if not Path(script_path).exists():
+        if not script_path.exists():
             makedirs(script_path)
 
         if self._gui:
-            wave_file = str(Path(script_path) / ("%s.fst" % config.entity_name))
-            if Path(wave_file).exists():
+            wave_file = script_path / ("%s.fst" % config.entity_name)
+            if wave_file.exists():
                 remove(wave_file)
         else:
             wave_file = None
 
-        cmd = [
-            str(Path(self._prefix) / self.executable),
-            f"--work={config.library_name}:{self._project.get_library(config.library_name).directory!s}",
-            "--std=%s" % self._std_str(self._vhdl_standard),
-        ]
+        libdir = self._project.get_library(config.library_name).directory
+        cmd = self._get_command(self._vhdl_standard,
+                                config.library_name,
+                                libdir)
 
-        cmd += ["-H", config.sim_options.get("nvc.heap_size", "64m")]
-
-        for library in self._project.get_libraries():
-            cmd += ["--map=%s:%s" % (library.name, library.directory)]
+        cmd += ["-H", config.sim_options.get("nvc.heap_size", "128m")]
 
         cmd += ["-e"]
 
         cmd += config.sim_options.get("nvc.elab_flags", [])
         cmd += ['%s-%s' % (config.entity_name, config.architecture_name)]
-
-        cmd += ["-O1"]   # Reduce optimisation level to speed up elaboration
 
         for name, value in config.generics.items():
             cmd += ['-g%s=%s' % (name, value)]
