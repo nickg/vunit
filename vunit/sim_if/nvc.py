@@ -84,6 +84,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         self._gtkwave_args = gtkwave_args
         self._vhdl_standard = None
         self._coverage_test_dirs = set()
+        self._supports_jit = self.determine_version(prefix) >= 1.9
 
         if self.use_color:
             environ['NVC_COLORS'] = "always"
@@ -261,7 +262,8 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
 
         if not elaborate_only:
             cmd += ["--no-save"]
-            cmd += ["--jit"]
+            if self._supports_jit:
+                cmd += ["--jit"]
             cmd += ["-r"]
             cmd += config.sim_options.get("nvc.sim_flags", [])
             cmd += [f'--exit-severity={config.vhdl_assert_stop_level}']
