@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Copyright (c) 2014-2023, Lars Asplund lars.anders.asplund@gmail.com
+# Copyright (c) 2014-2022, Lars Asplund lars.anders.asplund@gmail.com
 
 """
 Interface for NVC simulator
@@ -129,6 +129,13 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         """
         return False
 
+    @classmethod
+    def supports_vhdl_package_generics(cls):
+        """
+        Returns True when this simulator supports VHDL package generics
+        """
+        return True
+
     def setup_library_mapping(self, project):
         """
         Setup library mapping
@@ -157,8 +164,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             self._vhdl_standard = VHDL.STD_2008
         elif len(vhdl_standards) != 1:
             raise RuntimeError(
-                "NVC cannot handle mixed VHDL standards, found %r"
-                % list(vhdl_standards)
+                f'NVC cannot handle mixed VHDL standards, found {vhdl_standards!r}'
             )
         else:
             self._vhdl_standard = list(vhdl_standards)[0]
@@ -190,7 +196,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         if vhdl_standard == VHDL.STD_2019:
             return "2019"
 
-        raise ValueError("Invalid VHDL standard %s" % vhdl_standard)
+        raise ValueError(f'Invalid VHDL standard {vhdl_standard}')
 
     def _get_command(self, std, worklib, workpath):
         """
@@ -198,12 +204,12 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         """
         cmd = [
             str(Path(self._prefix) / self.executable),
-            f"--work={worklib}:{workpath!s}",
-            f"--std={self._std_str(std)}",
+            f'--work={worklib}:{workpath!s}',
+            f'--std={self._std_str(std)}',
         ]
 
         for library in self._project.get_libraries():
-            cmd += ["--map=%s:%s" % (library.name, library.directory)]
+            cmd += [f'--map={library.name}:{library.directory}']
 
         return cmd
 
@@ -232,7 +238,7 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
             makedirs(script_path)
 
         if self._gui:
-            wave_file = script_path / ("%s.fst" % config.entity_name)
+            wave_file = script_path / (f'{config.entity_name}.fst')
             if wave_file.exists():
                 remove(wave_file)
         else:
@@ -248,22 +254,23 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
         cmd += ["-e"]
 
         cmd += config.sim_options.get("nvc.elab_flags", [])
-        cmd += ['%s-%s' % (config.entity_name, config.architecture_name)]
+        cmd += [f'{config.entity_name}-{config.architecture_name}']
 
         for name, value in config.generics.items():
-            cmd += ['-g%s=%s' % (name, value)]
+            cmd += [f'-g{name}={value}']
 
         if not elaborate_only:
             cmd += ["--no-save"]
+            cmd += ["--jit"]
             cmd += ["-r"]
             cmd += config.sim_options.get("nvc.sim_flags", [])
-            cmd += ["--exit-severity=%s" % config.vhdl_assert_stop_level]
+            cmd += [f'--exit-severity={config.vhdl_assert_stop_level}']
 
             if config.sim_options.get("disable_ieee_warnings", False):
                 cmd += ["--ieee-warnings=off"]
 
             if wave_file:
-                cmd += ["--wave=%s" % wave_file]
+                cmd += [f'--wave={wave_file}']
 
         print(" ".join(cmd))
 
@@ -280,9 +287,9 @@ class NVCInterface(SimulatorInterface):  # pylint: disable=too-many-instance-att
 
             init_file = config.sim_options.get(self.name + ".gtkwave_script.gui", None)
             if init_file is not None:
-                cmd += ["--script", "{}".format(str(Path(init_file).resolve()))]
+                cmd += ["--script", str(Path(init_file).resolve())]
 
-            stdout.write("%s\n" % " ".join(cmd))
+            stdout.write(f'{" ".join(cmd)}\n')
             subprocess.call(cmd)
 
         return status
